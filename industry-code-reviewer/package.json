@@ -1,17 +1,51 @@
 {
   "name": "industry-code-reviewer",
   "displayName": "Industry Code Reviewer",
-  "description": "Industry-standard static code review without AI or API keys",
+  "publisher": "naveensnsgroups",
+  "description": "Industry-standard static code review for JavaScript and TypeScript. Detects security, quality, and maintainability issues. Fully offline. No AI. No API keys.",
   "version": "0.0.1",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/naveensnsgroups/vscode-industry-code-reviewer"
+  },
+  "homepage": "https://github.com/naveensnsgroups/vscode-industry-code-reviewer",
+  "bugs": {
+    "url": "https://github.com/naveensnsgroups/vscode-industry-code-reviewer/issues"
+  },
+  "keywords": [
+    "code review",
+    "static analysis",
+    "security",
+    "quality",
+    "best practices",
+    "javascript",
+    "typescript",
+    "eslint",
+    "sonarlint",
+    "offline"
+  ],
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Other"
+  ],
   "engines": {
     "vscode": "^1.107.0"
   },
-  "categories": ["Other"],
   "activationEvents": [
     "onLanguage:javascript",
     "onLanguage:typescript"
   ],
   "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "industry-code-reviewer.run",
+        "title": "Industry Code Reviewer: Analyze Current File"
+      }
+    ]
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
