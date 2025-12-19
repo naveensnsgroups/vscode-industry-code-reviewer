@@ -1,71 +1,64 @@
-# industry-code-reviewer README
+# Industry Code Reviewer
 
-This is the README for your extension "industry-code-reviewer". After writing up a brief description, we recommend including the following sections.
+**Industry Code Reviewer** is a lightweight, offline, industry-standard static code analysis extension for **JavaScript** and **TypeScript**.
 
-## Features
-
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+It detects common **security vulnerabilities**, **code quality issues**, and **maintainability problems** in real time — with **no AI**, **no API keys**, and **no internet dependency**.
 
 ---
 
-## Following extension guidelines
+##  Key Features
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+###  Security Analysis
+Detects high-risk security issues such as:
+- Hardcoded passwords and secrets
+- Hardcoded API keys
+- Sensitive data logged to console
+- Plain-text password comparisons
+- Tokens embedded in URLs
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+###  Code Quality Checks
+Improves code cleanliness and maintainability:
+- `console.log` usage in production code
+- Unused variables
+- Long or overly complex functions
+- Common JavaScript / TypeScript anti-patterns
 
-## Working with Markdown
+###  Real-Time Feedback
+- Runs automatically on file open, save, and editor change
+- Highlights issues directly in the editor
+- Shows detailed messages in the **Problems** panel
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+###  Privacy-First & Offline
+- No AI models
+- No telemetry
+- No API keys
+- Works fully offline
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+---
 
-## For more information
+##  Supported Languages
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+- JavaScript (`.js`)
+- TypeScript (`.ts`)
 
-**Enjoy!**
+---
+
+##  How It Works
+
+The extension uses a **rule-based static analysis engine** similar to industry tools like ESLint and SonarLint.
+
+Each rule:
+- Analyzes source code text
+- Detects violations
+- Reports precise line and column diagnostics
+
+---
+
+##  Usage
+
+1. Install the extension
+2. Open any JavaScript or TypeScript file
+3. Issues are highlighted automatically
+4. Open **Problems Panel** (`Ctrl + Shift + M`) to see all findings
+
+You can also run the command manually:
