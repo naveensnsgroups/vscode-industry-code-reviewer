@@ -33,27 +33,42 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FixProvider = void 0;
+exports.fixAllSafeIssues = fixAllSafeIssues;
 const vscode = __importStar(require("vscode"));
 const fixRegistry_1 = require("./fixRegistry");
-class FixProvider {
-    static providedCodeActionKinds = [
-        vscode.CodeActionKind.QuickFix
-    ];
-    provideCodeActions(document, range, context) {
-        const actions = [];
-        for (const diagnostic of context.diagnostics) {
-            const rule = (0, fixRegistry_1.getFixForRule)(String(diagnostic.code));
-            if (!rule || !rule.fix)
-                continue;
-            const action = new vscode.CodeAction(rule.fix.title, vscode.CodeActionKind.QuickFix);
-            action.edit = rule.fix.apply(document, diagnostic);
-            action.diagnostics = [diagnostic];
-            action.isPreferred = true;
-            actions.push(action);
+async function fixAllSafeIssues() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor)
+        return;
+    const document = editor.document;
+    const diagnostics = vscode.languages.getDiagnostics(document.uri);
+    const workspaceEdit = new vscode.WorkspaceEdit();
+    let appliedFixes = 0;
+    for (const diagnostic of diagnostics) {
+        const rule = (0, fixRegistry_1.getFixForRule)(String(diagnostic.code));
+        if (!rule || !rule.fix)
+            continue;
+        const edit = rule.fix.apply(document, {
+            line: diagnostic.range.start.line + 1,
+            columnStart: diagnostic.range.start.character,
+            columnEnd: diagnostic.range.end.character,
+            severity: 'low',
+            message: diagnostic.message,
+            code: String(diagnostic.code)
+        });
+        // 🔥 THIS IS THE FIX
+        for (const [uri, edits] of edit.entries()) {
+            for (const e of edits) {
+                workspaceEdit.replace(uri, e.range, e.newText ?? '');
+                appliedFixes++;
+            }
         }
-        return actions;
+    }
+    if (appliedFixes > 0) {
+        await vscode.workspace.applyEdit(workspaceEdit);
+    }
+    else {
+        vscode.window.showInformationMessage('No safe fixes available');
     }
 }
-exports.FixProvider = FixProvider;
-//# sourceMappingURL=fixProvider.js.map
+//# sourceMappingURL=fixAllCommand.js.map

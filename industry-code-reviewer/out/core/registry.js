@@ -9,6 +9,12 @@ const noTokenInUrl_1 = require("../rules/security/noTokenInUrl");
 const noConsoleLog_1 = require("../rules/quality/noConsoleLog");
 const noUnusedVar_1 = require("../rules/quality/noUnusedVar");
 const longFunction_1 = require("../rules/quality/longFunction");
+// ⚛️ React
+const missingUseEffectDeps_1 = require("../rules/react/missingUseEffectDeps");
+const noInlineFunctionInJsx_1 = require("../rules/react/noInlineFunctionInJsx");
+// ⚡ Next.js
+const noAnchorForInternalLink_1 = require("../rules/next/noAnchorForInternalLink");
+const noServerPropsInClient_1 = require("../rules/next/noServerPropsInClient");
 function getAllRules() {
     return [
         // 🔐 SECURITY
@@ -20,7 +26,13 @@ function getAllRules() {
         // 🧹 QUALITY
         noConsoleLog_1.noConsoleLogRule,
         noUnusedVar_1.noUnusedVarRule,
-        longFunction_1.longFunctionRule
+        longFunction_1.longFunctionRule,
+        // ⚛️ React
+        missingUseEffectDeps_1.missingUseEffectDepsRule,
+        noInlineFunctionInJsx_1.noInlineFunctionInJsxRule,
+        // ⚡ Next.js
+        noAnchorForInternalLink_1.noAnchorForInternalLinkRule,
+        noServerPropsInClient_1.noServerPropsInClientRule
     ];
 }
 //# sourceMappingURL=registry.js.map

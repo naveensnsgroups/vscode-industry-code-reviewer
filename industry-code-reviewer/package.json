@@ -3,8 +3,9 @@
   "displayName": "Industry Code Reviewer",
   "publisher": "naveensnsgroups",
   "description": "Industry-standard static code review for JavaScript and TypeScript. Detects security, quality, and maintainability issues. Fully offline. No AI. No API keys.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "icon": "media/icon.png",
+
   "repository": {
     "type": "git",
     "url": "https://github.com/naveensnsgroups/vscode-industry-code-reviewer"
@@ -13,6 +14,7 @@
   "bugs": {
     "url": "https://github.com/naveensnsgroups/vscode-industry-code-reviewer/issues"
   },
+
   "keywords": [
     "code review",
     "static analysis",
@@ -25,32 +27,56 @@
     "sonarlint",
     "offline"
   ],
+
   "categories": [
     "Programming Languages",
-    "Linters",
-    "Other"
+    "Linters"
   ],
+
   "engines": {
     "vscode": "^1.107.0"
   },
+
   "activationEvents": [
     "onLanguage:javascript",
-    "onLanguage:typescript"
+    "onLanguage:javascriptreact",
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact"
   ],
+
+  "extensionKind": ["workspace"],
+
   "main": "./out/extension.js",
+
   "contributes": {
     "commands": [
       {
         "command": "industry-code-reviewer.run",
         "title": "Industry Code Reviewer: Analyze Current File"
+      },
+      {
+        "command": "industry-code-reviewer.fixAll",
+        "title": "Industry Code Reviewer: Fix All Safe Issues"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Industry Code Reviewer",
+      "properties": {
+        "industryCodeReviewer.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Industry Code Reviewer"
+        }
+      }
+    }
   },
+
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./"
   },
+
   "devDependencies": {
     "@types/vscode": "^1.107.0",
     "@types/node": "22.x",
