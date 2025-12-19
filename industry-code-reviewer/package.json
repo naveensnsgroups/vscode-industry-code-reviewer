@@ -3,7 +3,7 @@
   "displayName": "Industry Code Reviewer",
   "publisher": "naveensnsgroups",
   "description": "Industry-standard static code review for JavaScript and TypeScript. Detects security, quality, and maintainability issues. Fully offline. No AI. No API keys.",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "icon": "media/icon.png",
 
   "repository": {
