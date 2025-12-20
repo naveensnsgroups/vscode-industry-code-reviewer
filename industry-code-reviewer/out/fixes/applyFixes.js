@@ -33,31 +33,29 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DiagnosticsService = void 0;
+exports.applyFixes = applyFixes;
 const vscode = __importStar(require("vscode"));
-class DiagnosticsService {
-    static update(document, issues, collection) {
-        const diagnostics = issues.map(issue => {
-            const range = new vscode.Range(new vscode.Position(issue.line - 1, issue.columnStart), new vscode.Position(issue.line - 1, issue.columnEnd));
-            const diagnostic = new vscode.Diagnostic(range, issue.message, mapSeverity(issue.severity));
-            diagnostic.source = 'Industry Code Reviewer';
-            diagnostic.code = issue.code;
-            return diagnostic;
-        });
-        collection.set(document.uri, diagnostics);
+const fixRegistry_1 = require("./fixRegistry");
+async function applyFixes(document, diagnostics) {
+    const workspaceEdit = new vscode.WorkspaceEdit();
+    let applied = 0;
+    for (const diagnostic of diagnostics) {
+        const rule = (0, fixRegistry_1.getFixForRule)(String(diagnostic.code));
+        if (!rule || !rule.fix)
+            continue;
+        const edit = rule.fix.apply(document, diagnostic);
+        if (!edit)
+            continue;
+        for (const [uri, edits] of edit.entries()) {
+            for (const e of edits) {
+                workspaceEdit.replace(uri, e.range, e.newText);
+                applied++;
+            }
+        }
     }
-}
-exports.DiagnosticsService = DiagnosticsService;
-function mapSeverity(severity) {
-    switch (severity) {
-        case 'low':
-            return vscode.DiagnosticSeverity.Information;
-        case 'medium':
-            return vscode.DiagnosticSeverity.Warning;
-        case 'high':
-            return vscode.DiagnosticSeverity.Error;
-        default:
-            return vscode.DiagnosticSeverity.Warning;
+    if (applied > 0) {
+        await vscode.workspace.applyEdit(workspaceEdit);
     }
+    return applied;
 }
-//# sourceMappingURL=diagnosticsService.js.map
+//# sourceMappingURL=applyFixes.js.map

@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { runEngine } from './core/engine';
 import { DiagnosticsService } from './diagnostics/diagnosticsService';
 import { getAllRules } from './core/registry';
-import { registerFixes, getFixForRule } from './fixes/fixRegistry';
+import { registerFixes } from './fixes/fixRegistry';
 import { FixProvider } from './fixes/fixProvider';
-import { RuleIssue } from './core/rule';
+import { applyFixes } from './fixes/applyFixes';
 
 let diagnostics: vscode.DiagnosticCollection;
 
@@ -22,11 +22,10 @@ export function activate(context: vscode.ExtensionContext) {
     /* ============================
        🧠 REGISTER RULES & FIXES
     ============================ */
-    const rules = getAllRules();
-    registerFixes(rules);
+    registerFixes(getAllRules());
 
     /* ============================
-       🔧 QUICK FIX PROVIDER
+       🔧 QUICK FIX PROVIDER (Ctrl+.)
     ============================ */
     context.subscriptions.push(
         vscode.languages.registerCodeActionsProvider(
@@ -50,14 +49,14 @@ export function activate(context: vscode.ExtensionContext) {
     const analyze = (doc?: vscode.TextDocument) => {
         if (!doc) return;
 
-        const supportedLanguages = [
+        const supported = [
             'javascript',
             'javascriptreact',
             'typescript',
             'typescriptreact'
         ];
 
-        if (!supportedLanguages.includes(doc.languageId)) return;
+        if (!supported.includes(doc.languageId)) return;
 
         const issues = runEngine(doc);
         DiagnosticsService.update(doc, issues, diagnostics);
@@ -68,19 +67,38 @@ export function activate(context: vscode.ExtensionContext) {
     ============================ */
     context.subscriptions.push(
         vscode.workspace.onDidOpenTextDocument(analyze),
-        vscode.workspace.onDidSaveTextDocument(analyze),
+
+        vscode.workspace.onDidSaveTextDocument(async document => {
+            analyze(document);
+
+            const config =
+                vscode.workspace.getConfiguration(
+                    'industryCodeReviewer'
+                );
+
+            if (!config.get<boolean>('fixOnSave', false)) return;
+
+            const fileDiagnostics =
+                vscode.languages.getDiagnostics(document.uri);
+
+            await applyFixes(document, fileDiagnostics);
+        }),
+
         vscode.window.onDidChangeActiveTextEditor(editor =>
             analyze(editor?.document)
         )
     );
 
+    /* ============================
+       🔍 ANALYZE ACTIVE FILE
+    ============================ */
     if (vscode.window.activeTextEditor) {
         analyze(vscode.window.activeTextEditor.document);
     }
 
-    /* =====================================================
-       🛠 PHASE 2 — FIX ALL SAFE ISSUES (FINAL VERSION)
-    ===================================================== */
+    /* ============================
+       🛠 FIX ALL SAFE ISSUES COMMAND
+    ============================ */
     context.subscriptions.push(
         vscode.commands.registerCommand(
             'industry-code-reviewer.fixAll',
@@ -94,66 +112,27 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 const document = editor.document;
-                const fileDiagnostics =
-                    vscode.languages.getDiagnostics(document.uri);
+                const diagnosticsForFile =
+                    vscode.languages.getDiagnostics(
+                        document.uri
+                    );
 
-                if (fileDiagnostics.length === 0) {
+                if (diagnosticsForFile.length === 0) {
                     vscode.window.showInformationMessage(
                         'No issues found'
                     );
                     return;
                 }
 
-                const workspaceEdit = new vscode.WorkspaceEdit();
-                let appliedFixes = 0;
-
-                for (const diagnostic of fileDiagnostics) {
-                    const rule = getFixForRule(
-                        String(diagnostic.code)
-                    );
-                    if (!rule || !rule.fix) continue;
-
-                    const issue: RuleIssue = {
-                        line:
-                            diagnostic.range.start.line + 1,
-                        columnStart:
-                            diagnostic.range.start.character,
-                        columnEnd:
-                            diagnostic.range.end.character,
-                        severity: 'low',
-                        message: diagnostic.message,
-                        code: String(diagnostic.code)
-                    };
-
-                    const edit = rule.fix.apply(
-                        document,
-                        issue
-                    );
-
-                    for (const [uri, edits] of edit.entries()) {
-                        for (const e of edits) {
-                            // ✅ Supports delete & replace safely
-                            workspaceEdit.replace(
-                                uri,
-                                e.range,
-                                e.newText ?? ''
-                            );
-                            appliedFixes++;
-                        }
-                    }
-                }
-
-                if (appliedFixes === 0) {
-                    vscode.window.showInformationMessage(
-                        'No safe fixes available'
-                    );
-                    return;
-                }
-
-                await vscode.workspace.applyEdit(workspaceEdit);
+                const applied = await applyFixes(
+                    document,
+                    diagnosticsForFile
+                );
 
                 vscode.window.showInformationMessage(
-                    `Applied ${appliedFixes} safe fix(es)`
+                    applied === 0
+                        ? 'No safe fixes available'
+                        : `Applied ${applied} safe fix(es)`
                 );
             }
         )

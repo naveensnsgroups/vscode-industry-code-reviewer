@@ -2,7 +2,7 @@
   "name": "industry-code-reviewer",
   "displayName": "Industry Code Reviewer",
   "publisher": "naveensnsgroups",
-  "description": "Industry-standard static code review for JavaScript and TypeScript. Detects security, quality, and maintainability issues. Fully offline. No AI. No API keys.",
+  "description": "Industry-standard static code review for JavaScript, TypeScript, React, and Next.js. Detects security, quality, and maintainability issues. Fully offline. No AI. No API keys.",
   "version": "0.1.0",
   "icon": "media/icon.png",
 
@@ -23,6 +23,8 @@
     "best practices",
     "javascript",
     "typescript",
+    "react",
+    "nextjs",
     "eslint",
     "sonarlint",
     "offline"
@@ -59,13 +61,26 @@
         "title": "Industry Code Reviewer: Fix All Safe Issues"
       }
     ],
+
     "configuration": {
       "title": "Industry Code Reviewer",
       "properties": {
         "industryCodeReviewer.enable": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Industry Code Reviewer"
+          "description": "Enable or disable Industry Code Reviewer"
+        },
+
+        "industryCodeReviewer.fixOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically apply safe fixes on file save"
+        },
+
+        "industryCodeReviewer.rules": {
+          "type": "object",
+          "default": {},
+          "description": "Configure rule severity per rule ID (off | low | medium | high)"
         }
       }
     }

@@ -41,6 +41,7 @@ const diagnosticsService_1 = require("./diagnostics/diagnosticsService");
 const registry_1 = require("./core/registry");
 const fixRegistry_1 = require("./fixes/fixRegistry");
 const fixProvider_1 = require("./fixes/fixProvider");
+const applyFixes_1 = require("./fixes/applyFixes");
 let diagnostics;
 function activate(context) {
     vscode.window.showInformationMessage('Industry Code Reviewer Activated');
@@ -52,10 +53,9 @@ function activate(context) {
     /* ============================
        🧠 REGISTER RULES & FIXES
     ============================ */
-    const rules = (0, registry_1.getAllRules)();
-    (0, fixRegistry_1.registerFixes)(rules);
+    (0, fixRegistry_1.registerFixes)((0, registry_1.getAllRules)());
     /* ============================
-       🔧 QUICK FIX PROVIDER
+       🔧 QUICK FIX PROVIDER (Ctrl+.)
     ============================ */
     context.subscriptions.push(vscode.languages.registerCodeActionsProvider([
         'javascript',
@@ -71,13 +71,13 @@ function activate(context) {
     const analyze = (doc) => {
         if (!doc)
             return;
-        const supportedLanguages = [
+        const supported = [
             'javascript',
             'javascriptreact',
             'typescript',
             'typescriptreact'
         ];
-        if (!supportedLanguages.includes(doc.languageId))
+        if (!supported.includes(doc.languageId))
             return;
         const issues = (0, engine_1.runEngine)(doc);
         diagnosticsService_1.DiagnosticsService.update(doc, issues, diagnostics);
@@ -85,13 +85,23 @@ function activate(context) {
     /* ============================
        🔄 FILE EVENTS
     ============================ */
-    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(analyze), vscode.workspace.onDidSaveTextDocument(analyze), vscode.window.onDidChangeActiveTextEditor(editor => analyze(editor?.document)));
+    context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(analyze), vscode.workspace.onDidSaveTextDocument(async (document) => {
+        analyze(document);
+        const config = vscode.workspace.getConfiguration('industryCodeReviewer');
+        if (!config.get('fixOnSave', false))
+            return;
+        const fileDiagnostics = vscode.languages.getDiagnostics(document.uri);
+        await (0, applyFixes_1.applyFixes)(document, fileDiagnostics);
+    }), vscode.window.onDidChangeActiveTextEditor(editor => analyze(editor?.document)));
+    /* ============================
+       🔍 ANALYZE ACTIVE FILE
+    ============================ */
     if (vscode.window.activeTextEditor) {
         analyze(vscode.window.activeTextEditor.document);
     }
-    /* =====================================================
-       🛠 PHASE 2 — FIX ALL SAFE ISSUES (FINAL VERSION)
-    ===================================================== */
+    /* ============================
+       🛠 FIX ALL SAFE ISSUES COMMAND
+    ============================ */
     context.subscriptions.push(vscode.commands.registerCommand('industry-code-reviewer.fixAll', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -99,40 +109,15 @@ function activate(context) {
             return;
         }
         const document = editor.document;
-        const fileDiagnostics = vscode.languages.getDiagnostics(document.uri);
-        if (fileDiagnostics.length === 0) {
+        const diagnosticsForFile = vscode.languages.getDiagnostics(document.uri);
+        if (diagnosticsForFile.length === 0) {
             vscode.window.showInformationMessage('No issues found');
             return;
         }
-        const workspaceEdit = new vscode.WorkspaceEdit();
-        let appliedFixes = 0;
-        for (const diagnostic of fileDiagnostics) {
-            const rule = (0, fixRegistry_1.getFixForRule)(String(diagnostic.code));
-            if (!rule || !rule.fix)
-                continue;
-            const issue = {
-                line: diagnostic.range.start.line + 1,
-                columnStart: diagnostic.range.start.character,
-                columnEnd: diagnostic.range.end.character,
-                severity: 'low',
-                message: diagnostic.message,
-                code: String(diagnostic.code)
-            };
-            const edit = rule.fix.apply(document, issue);
-            for (const [uri, edits] of edit.entries()) {
-                for (const e of edits) {
-                    // ✅ Supports delete & replace safely
-                    workspaceEdit.replace(uri, e.range, e.newText ?? '');
-                    appliedFixes++;
-                }
-            }
-        }
-        if (appliedFixes === 0) {
-            vscode.window.showInformationMessage('No safe fixes available');
-            return;
-        }
-        await vscode.workspace.applyEdit(workspaceEdit);
-        vscode.window.showInformationMessage(`Applied ${appliedFixes} safe fix(es)`);
+        const applied = await (0, applyFixes_1.applyFixes)(document, diagnosticsForFile);
+        vscode.window.showInformationMessage(applied === 0
+            ? 'No safe fixes available'
+            : `Applied ${applied} safe fix(es)`);
     }));
 }
 function deactivate() {

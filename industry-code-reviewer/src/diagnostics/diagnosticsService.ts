@@ -13,20 +13,33 @@ export class DiagnosticsService {
                 new vscode.Position(issue.line - 1, issue.columnEnd)
             );
 
-            const diag = new vscode.Diagnostic(
+            const diagnostic = new vscode.Diagnostic(
                 range,
                 issue.message,
-                issue.severity === 'high'
-                    ? vscode.DiagnosticSeverity.Error
-                    : vscode.DiagnosticSeverity.Warning
+                mapSeverity(issue.severity)
             );
 
-            diag.source = 'Industry Code Reviewer';
-            diag.code = issue.code;
+            diagnostic.source = 'Industry Code Reviewer';
+            diagnostic.code = issue.code;
 
-            return diag;
+            return diagnostic;
         });
 
         collection.set(document.uri, diagnostics);
+    }
+}
+
+function mapSeverity(
+    severity: RuleIssue['severity']
+): vscode.DiagnosticSeverity {
+    switch (severity) {
+        case 'low':
+            return vscode.DiagnosticSeverity.Information;
+        case 'medium':
+            return vscode.DiagnosticSeverity.Warning;
+        case 'high':
+            return vscode.DiagnosticSeverity.Error;
+        default:
+            return vscode.DiagnosticSeverity.Warning;
     }
 }
